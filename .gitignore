@@ -9,3 +9,4 @@ setup.exe
 *.docdir
 .merlin
 *.install
+_opam/
