@@ -104,6 +104,13 @@ let print_one ch (c1, c2) =
 
 let pp = Fmt.list print_one
 
+let print_ascii ch (c1,c2) = 
+  if c1 = c2 then
+    Format.fprintf ch "%s" Char.(escaped @@ chr c1)
+  else
+    Format.fprintf ch "%s-%s" Char.(escaped @@ chr c1) Char.(escaped @@ chr c2)
+let pp_ascii = Fmt.list print_ascii
+
 let rec iter t ~f =
   match t with
   | [] -> ()

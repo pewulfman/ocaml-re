@@ -41,13 +41,20 @@ let group_split2 _ =
   let sp = full_split ~rex "testxyyy" in
   assert_equal ~printer sp [Text "test"; Delim "x"; NoGroup; Text "yyy"]
 
+let printer a = a
+let pretty_print _ =
+  let string = "(toto)?beadbeef[0-9]+" in 
+  let re = Re.Pcre.re string in
+  let pp = Re.Pcre.pp re in
+  assert_equal ~printer pp string
 let test_fixtures =
   "test pcre features" >:::
   [ "test [:blank:] class" >:: test_blank_class
   ; "test splitting empty string" >:: split_empty
   ; "test split with max of 1" >:: split_max_1
   ; "test group split 1" >:: group_split1
-  ; "test group split 2 - NoGroup" >:: group_split2]
+  ; "test group split 2 - NoGroup" >:: group_split2
+  ; "test printer 1" >:: pretty_print]
 
 let _ = run_test_tt_main test_fixtures
 

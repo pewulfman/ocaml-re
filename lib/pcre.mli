@@ -40,6 +40,8 @@ val split : rex:regexp -> string -> string list
 
 val quote : string -> string
 
+val pp : Core.t -> string
+(** Print the regexp using the PCRE syntax *)
 (** {2 Deprecated} *)
 
 type substrings = Group.t

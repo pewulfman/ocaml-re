@@ -65,6 +65,7 @@ val compile : Core.t -> Core.re
 val compile_pat : ?opts:(opt list) -> string -> Core.re
 (** [compile r] is defined as [Core.compile (Core.longest r)] *)
 
+val pp : Core.t -> string
 (*
 Deviation from the standard / ambiguities in the standard
 ---------------------------------------------------------

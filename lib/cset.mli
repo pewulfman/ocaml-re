@@ -23,7 +23,7 @@
 (* Character sets, represented as sorted list of intervals *)
 
 type c = int
-type t
+type t = (c * c) list
 
 val iter : t -> f:(c -> c -> unit) -> unit
 
@@ -43,6 +43,7 @@ type hash
 val hash : t -> hash
 
 val pp : Format.formatter -> t -> unit
+val pp_ascii : Format.formatter -> t -> unit
 
 val one_char : t -> c option
 

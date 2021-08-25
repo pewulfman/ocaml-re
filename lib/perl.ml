@@ -271,3 +271,57 @@ let re  ?(opts = []) s =
 
 let compile = Re.compile
 let compile_pat ?(opts = []) s = compile (re ~opts s)
+
+let rec pp ppf re = 
+  match re with
+    Core.Set set -> (
+      match set with
+        [a,b] when a = b -> Format.fprintf ppf "%a" Cset.pp_ascii set
+      | _ -> Format.fprintf ppf "[%a]" Cset.pp_ascii set
+    )
+  | Sequence (re_list) ->
+      Format.fprintf ppf "%a" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf "") pp) re_list
+  | Alternative re_alt ->
+      Format.fprintf ppf "%a" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf "|") pp) re_alt
+  | Repeat (re, i , j_opt) -> (
+    match i, j_opt with
+      0, None    -> Format.fprintf ppf "%a*" pp re
+    | 1, None    -> Format.fprintf ppf "%a+" pp re
+    | 0, Some(1) -> Format.fprintf ppf "%a?" pp re
+    | i, Some(j) when i = j -> Format.fprintf ppf "%a{%d}" pp re i
+    | i, Some(j) -> Format.fprintf ppf "%a{%d,%d}" pp re i j
+    | i, None    -> Format.fprintf ppf "%a{%d,}" pp re i
+  )
+  | Beg_of_word 
+  | End_of_word -> Format.fprintf ppf "\\b"
+  | Beg_of_line 
+  | Beg_of_str -> Format.fprintf ppf "^"
+  | End_of_line
+  | End_of_str -> Format.fprintf ppf "$"
+  | Not_bound  -> Format.fprintf ppf "\\B"
+  | Last_end_of_line -> Format.fprintf ppf "\\Z"
+  | Start -> Format.fprintf ppf "/"
+  | Stop  -> Format.fprintf ppf "/"
+  | Sem (sem , re) -> (
+    match sem with
+    | `Longest  -> Format.fprintf ppf "%a" pp re
+    | `Shortest -> Format.fprintf ppf "%a" pp re
+    | `First    -> Format.fprintf ppf "%a" pp re
+  )
+  | Sem_greedy (sem_greedy , re) -> (
+    match sem_greedy with
+    | `Greedy     -> Format.fprintf ppf "%a" pp re
+    | `Non_greedy -> Format.fprintf ppf "%a"  pp re)
+  | Group re ->
+    Format.fprintf ppf "(%a)" pp re 
+  | No_group re 
+  | Nest re
+  | Case re
+  | No_case re -> Format.fprintf ppf "%a" pp re
+  | Intersection _ -> failwith "no intersection ?"
+  | Complement re_list ->
+     Format.fprintf ppf "[^%a]" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf "") pp) re_list
+  | Difference _-> failwith "no difference ?"
+  | Pmark _ -> failwith "no Pmark ?"
+
+let pp re = Format.asprintf "%a" pp re

@@ -39,3 +39,5 @@ val compile : Core.t -> Core.re
 
 val compile_pat : ?opts:opt list -> string -> Core.re
 (** Regular expression compilation *)
+
+val pp : Core.t -> string

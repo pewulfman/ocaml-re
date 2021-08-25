@@ -115,5 +115,7 @@ let full_split ?(max=0) ~rex s =
             List.rev !l)) results in
     List.concat matches
 
+let pp re =
+  Perl.pp re
 
 type substrings = Group.t
