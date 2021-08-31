@@ -65,20 +65,16 @@ let parse s =
         let r = regexp () in
         if not (accept2 '\\' ')') then raise Parse_error;
         Re.group r
-      end else if accept '`' then
+      end else if accept 'A' then
         Re.bos
-      else if accept '\'' then
+      else if accept 'Z' then
+        Re.leol
+      else if accept 'z' then
         Re.eos
-      else if accept '=' then
-        Re.start
       else if accept 'b' then
         Re.alt [Re.bow; Re.eow]
       else if accept 'B' then
         Re.not_boundary
-      else if accept '<' then
-        Re.bow
-      else if accept '>' then
-        Re.eow
       else if accept 'w' then
         Re.alt [Re.alnum; Re.char '_']
       else if accept 'W' then
@@ -143,12 +139,12 @@ let rec pp ppf re =
     | i, Some(j) -> Format.fprintf ppf "%a{%d,%d}" pp re i j
     | i, None    -> Format.fprintf ppf "%a{%d,}" pp re i
   )
-  | Beg_of_word -> Format.fprintf ppf "\\<"
-  | End_of_word -> Format.fprintf ppf "\\>"
+  | Beg_of_word 
+  | End_of_word -> failwith "not supported"
   | Beg_of_line -> Format.fprintf ppf "^" 
-  | Beg_of_str -> Format.fprintf ppf "\\`"
+  | Beg_of_str -> Format.fprintf ppf "\\A"
   | End_of_line -> Format.fprintf ppf "$"
-  | End_of_str -> Format.fprintf ppf "\\\'"
+  | End_of_str -> Format.fprintf ppf "\\z"
   | Not_bound  -> Format.fprintf ppf "\\B"
   | Last_end_of_line -> Format.fprintf ppf "\\Z"
   | Start -> Format.fprintf ppf "\\="

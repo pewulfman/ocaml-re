@@ -6,3 +6,5 @@ module Perl = Perl
 module Pcre = Pcre
 module Posix = Posix
 module Str = Str
+
+module Oniguruma = Oniguruma
