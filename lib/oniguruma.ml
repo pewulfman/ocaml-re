@@ -68,7 +68,7 @@ let parse s =
       end else if accept 'A' then
         Re.bos
       else if accept 'Z' then
-        Re.leol
+        Re.alt [Re.eos; Re.leol]
       else if accept 'z' then
         Re.eos
       else if accept 'b' then
@@ -128,8 +128,11 @@ let rec pp ppf re =
     )
   | Sequence (re_list) ->
       Format.fprintf ppf "%a" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf "") pp) re_list
-  | Alternative re_alt ->
-      Format.fprintf ppf "%a" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf "|") pp) re_alt
+  | Alternative re_alt -> (match re_alt with
+        [Beg_of_str;Last_end_of_line] -> Format.fprintf ppf "\\Z"
+      | [Beg_of_word;End_of_word] -> Format.fprintf ppf "\\b"
+      | _ -> Format.fprintf ppf "%a" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf "|") pp) re_alt
+  )
   | Repeat (re, i , j_opt) -> (
     match i, j_opt with
       0, None    -> Format.fprintf ppf "%a*" pp re
@@ -146,7 +149,7 @@ let rec pp ppf re =
   | End_of_line -> Format.fprintf ppf "$"
   | End_of_str -> Format.fprintf ppf "\\z"
   | Not_bound  -> Format.fprintf ppf "\\B"
-  | Last_end_of_line -> Format.fprintf ppf "\\Z"
+  | Last_end_of_line ->  failwith "not supported"
   | Start -> Format.fprintf ppf "\\="
   | Stop  -> Format.fprintf ppf "/"
   | Sem (sem , re) -> (
