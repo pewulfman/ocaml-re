@@ -163,7 +163,7 @@ let rec pp ppf re =
     | `Greedy     -> Format.fprintf ppf "%a" pp re
     | `Non_greedy -> Format.fprintf ppf "%a"  pp re)
   | Group re ->
-    Format.fprintf ppf "\\(%a\\)" pp re 
+    Format.fprintf ppf "(%a)" pp re 
   | No_group re 
   | Nest re
   | Case re
