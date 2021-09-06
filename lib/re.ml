@@ -8,3 +8,4 @@ module Posix = Posix
 module Str = Str
 
 module Oniguruma = Oniguruma
+module Vim = Vim

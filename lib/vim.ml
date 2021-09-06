@@ -54,6 +54,14 @@ let parse multiline dollar_endonly dotall ungreedy s =
   let l = String.length s in
   let eos () = !i = l in
   let test c = not (eos ()) && s.[!i] = c in
+  let test_s s' = 
+    let len = String.length s' in
+    try
+      for j = 0 to len - 1 do
+        if s'.[j] <> s.[!i + j] then raise Exit
+      done;
+      true
+    with Exit -> false in
   let accept c = let r = test c in if r then incr i; r in
   let accept_s s' =
     let len = String.length s' in
@@ -72,36 +80,50 @@ let parse multiline dollar_endonly dotall ungreedy s =
     let gr = if ungreedy then not gr else gr in
     if gr then Re.non_greedy r else Re.greedy r
   in
-  let rec regexp () = regexp' (branch ())
+  let rec regexp () = 
+    regexp' (branch ())
   and regexp' left =
-    if accept '|' then regexp' (Re.alt [left; branch ()]) else left
+    if accept_s "\\|" then regexp' (Re.alt [left; branch ()]) else left
   and branch () = branch' []
   and branch' left =
-    if eos () || test '|' || test ')' then Re.seq (List.rev left)
+    if eos () || test_s "\\|" || test_s "\\)" then Re.seq (List.rev left)
     else branch' (piece () :: left)
   and piece () =
     let r = atom () in
-    if accept '*' then greedy_mod (Re.rep r) else
-    if accept '\\' then begin 
-      if accept '+' then greedy_mod (Re.rep1 r) else
-      if accept '=' then greedy_mod (Re.opt r) else
-      if accept '{' then
+    if accept '*' then  greedy_mod (Re.rep r) else
+    if accept_s "\\+" then greedy_mod (Re.rep1 r) else
+    if accept_s "\\?" then greedy_mod (Re.opt r) else
+    if accept_s "\\{" then
         match integer () with
           Some i ->
             let j = if accept ',' then integer () else Some i in
-            if not (accept '}') then raise Parse_error;
+            if not (accept_s "\\}") then raise Parse_error;
             begin match j with
               Some j when j < i -> raise Parse_error | _ -> ()
             end;
             greedy_mod (Re.repn r i j)
         | None ->
             unget (); r
-      else raise Parse_error end
     else
       r
   and atom () =
     if accept '.' then begin
       if dotall then Re.any else Re.notnl
+    end else if accept_s "\\(" then begin
+      if accept '?' then begin
+        if accept ':' then begin
+          let r = regexp () in
+          if not (accept_s "\\)") then raise Parse_error;
+          r
+        end else if accept '#' then begin
+          comment ()
+        end else
+          raise Parse_error
+      end else begin
+        let r = regexp () in
+        if not (accept_s "\\)") then raise Parse_error;
+        Re.group r
+      end
     end else
     if accept '^' then begin
       if multiline then Re.bol else Re.bos
@@ -113,27 +135,7 @@ let parse multiline dollar_endonly dotall ungreedy s =
       else
         Re.alt (bracket [])
     end else if accept '\\' then begin
-(* XXX
-   - Back-references
-   - \cx (control-x), \e, \f, \n, \r, \t, \xhh, \ddd
-*)
-      if eos () then raise Parse_error
-      else if accept '(' then begin
-        if accept '?' then begin
-          if accept ':' then begin
-            let r = regexp () in
-            if not (accept '\\' && accept ')') then raise Parse_error;
-            r
-          end else if accept '#' then begin
-            comment ()
-          end else
-            raise Parse_error
-        end else begin
-          let r = regexp () in
-          if not (accept ')') then raise Parse_error;
-          Re.group r
-        end 
-      end;
+      if eos () then raise Parse_error;
       match get () with
         'w' ->
           Re.alt [Re.alnum; Re.char '_']
@@ -283,7 +285,7 @@ let rec pp ppf re =
   | Sequence (re_list) ->
       Format.fprintf ppf "%a" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf "") pp) re_list
   | Alternative re_alt ->
-      Format.fprintf ppf "%a" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf "\|") pp) re_alt
+      Format.fprintf ppf "%a" (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf "\\|") pp) re_alt
   | Repeat (re, i , j_opt) -> (
     match i, j_opt with
       0, None    -> Format.fprintf ppf "%a*" pp re
@@ -314,7 +316,7 @@ let rec pp ppf re =
     | `Greedy     -> Format.fprintf ppf "%a" pp re
     | `Non_greedy -> Format.fprintf ppf "%a"  pp re)
   | Group re ->
-    Format.fprintf ppf "\(%a\)" pp re 
+    Format.fprintf ppf "\\(%a\\)" pp re 
   | No_group re 
   | Nest re
   | Case re

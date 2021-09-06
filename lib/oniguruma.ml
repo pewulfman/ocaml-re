@@ -68,7 +68,7 @@ let parse s =
       end else if accept 'A' then
         Re.bos
       else if accept 'Z' then
-        Re.alt [Re.eos; Re.leol]
+        Re.leol
       else if accept 'z' then
         Re.eos
       else if accept 'b' then
@@ -149,7 +149,7 @@ let rec pp ppf re =
   | End_of_line -> Format.fprintf ppf "$"
   | End_of_str -> Format.fprintf ppf "\\z"
   | Not_bound  -> Format.fprintf ppf "\\B"
-  | Last_end_of_line ->  failwith "not supported"
+  | Last_end_of_line ->  Format.fprintf ppf "\\Z"
   | Start -> Format.fprintf ppf "\\="
   | Stop  -> Format.fprintf ppf "/"
   | Sem (sem , re) -> (
